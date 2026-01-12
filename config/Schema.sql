@@ -1,0 +1,28 @@
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  first_name VARCHAR(80) NOT NULL,
+  last_name VARCHAR(80) NOT NULL,
+  email VARCHAR(120) NOT NULL UNIQUE,
+  whatsapp VARCHAR(30) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('pelanggan','driver','admin') NOT NULL DEFAULT 'pelanggan',
+  is_admin TINYINT(1) NOT NULL DEFAULT 0,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS tracking_requests (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  resi VARCHAR(80) NOT NULL,
+  courier VARCHAR(50) NULL,
+  requested_by_user_id BIGINT UNSIGNED NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_resi (resi),
+  CONSTRAINT fk_tracking_user
+    FOREIGN KEY (requested_by_user_id) REFERENCES users(id)
+    ON DELETE SET NULL
+);
