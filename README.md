@@ -24,7 +24,7 @@ sudo bash install.sh
 ```
 
 Installer tanya:
-- domain, timezone
+- domain, timezone, dll
 - backend/frontend port (default 8081, 3001) => aman tidak tabrakan pterodactyl
 - database name/user/pass
 - admin pertama
