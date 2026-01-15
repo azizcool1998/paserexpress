@@ -1,0 +1,261 @@
+#!/usr/bin/env bash
+###############################################################################
+#               PASEREXPRESS — HEALTHFIX NUCLEAR v1.0
+#   Pembersihan Total Web Layer + PHP + Nginx + MariaDB + SSL
+#   Bisa hapus database atau tidak (opsi tersedia)
+###############################################################################
+
+RED="\e[31m"; GREEN="\e[32m"; YELLOW="\e[33m"; BLUE="\e[36m"; RESET="\e[0m"
+
+ok(){ echo -e "${GREEN}[OK]${RESET} $*"; }
+warn(){ echo -e "${YELLOW}[WARN]${RESET} $*"; }
+fail(){ echo -e "${RED}[FAIL]${RESET} $*"; exit 1; }
+info(){ echo -e "${BLUE}[INFO]${RESET} $*"; }
+line(){ echo -e "${BLUE}-------------------------------------------------${RESET}"; }
+
+LOG="/var/log/paserexpress_healthfix_nuclear.log"
+touch "$LOG"
+
+echo_log(){ echo "$(date '+%F %T') — $*" >> "$LOG"; }
+
+###############################################################################
+# INPUT
+###############################################################################
+
+line
+echo -e "${RED}⚠️  HEALTHFIX NUCLEAR — MODE PEMUSNAHAN ⚠️${RESET}"
+echo -e "Script ini AKAN menghancurkan web layer dan bisa menghapus database!"
+line
+
+while [[ -z "${DOMAIN:-}" ]]; do
+    read -rp "Masukkan Domain Website: " DOMAIN
+done
+
+while [[ -z "${ROOT_DIR:-}" ]]; do
+    read -rp "Masukkan Path Root Aplikasi: " ROOT_DIR
+done
+
+PUBLIC="$ROOT_DIR/src/public"
+CONF="/etc/nginx/sites-available/$DOMAIN.conf"
+SYMLINK="/etc/nginx/sites-enabled/$DOMAIN.conf"
+
+line
+echo -e "${YELLOW}Hapus database MariaDB?${RESET}"
+echo "1 = YA (DB + data hilang total)"
+echo "2 = TIDAK (DB tetap aman)"
+
+read -rp "Pilih (1/2): " OPT_DB
+
+if [[ "$OPT_DB" == "1" ]]; then
+    NUKE_DB="yes"
+else
+    NUKE_DB="no"
+fi
+
+line
+echo -e "${YELLOW}Reset Folder PaserExpress?${RESET}"
+echo "1 = YA (hapus /var/www/paserexpress)"
+echo "2 = TIDAK (dipertahankan)"
+
+read -rp "Pilih (1/2): " OPT_APP
+
+if [[ "$OPT_APP" == "1" ]]; then
+    NUKE_APP="yes"
+else
+    NUKE_APP="no"
+fi
+
+###############################################################################
+# 1. STOP SEMUA SERVICE
+###############################################################################
+line
+info "[1] Stop All Web Services"
+
+systemctl stop nginx || true
+systemctl stop php8.3-fpm || true
+systemctl stop mariadb || true
+
+ok "Semua service dimatikan"
+
+###############################################################################
+# 2. HAPUS SEMUA WEB LAYER
+###############################################################################
+line
+info "[2] Removing All Web Layer Components"
+
+fix(){ echo -e "${RED}[NUKING]${RESET} $*"; }
+
+fix "Menghapus Nginx..."
+apt purge -y nginx nginx-* >/dev/null 2>&1
+rm -rf /etc/nginx /var/log/nginx /var/www/html /run/nginx
+
+fix "Menghapus PHP..."
+apt purge -y php8.3 php8.3-* >/dev/null 2>&1
+rm -rf /etc/php /run/php
+
+fix "Menghapus Certbot..."
+apt purge -y certbot python3-certbot-nginx >/dev/null 2>&1
+rm -rf /etc/letsencrypt
+
+###############################################################################
+# 3. MARIA DB NUCLEAR (opsional)
+###############################################################################
+line
+info "[3] MariaDB Nuclear Choice"
+
+if [[ "$NUKE_DB" == "yes" ]]; then
+    fix "Menghapus MariaDB + DATA!"
+    systemctl stop mariadb || true
+    apt purge -y mariadb-server mariadb-* >/dev/null 2>&1
+    rm -rf /var/lib/mysql /etc/mysql
+    ok "Database berhasil dihancurkan"
+else
+    warn "Database TIDAK dihapus (aman)."
+fi
+
+###############################################################################
+# 4. HAPUS APLIKASI (opsional)
+###############################################################################
+line
+info "[4] Aplikasi PaserExpress"
+
+if [[ "$NUKE_APP" == "yes" ]]; then
+    fix "Menghapus folder aplikasi..."
+    rm -rf "$ROOT_DIR"
+    ok "Folder aplikasi dihapus"
+else
+    warn "Folder aplikasi TIDAK dihapus"
+fi
+
+###############################################################################
+# 5. INSTALL ULANG WEB LAYER
+###############################################################################
+line
+info "[5] Reinstall Web Layer"
+
+apt update -y
+
+apt install -y nginx
+apt install -y php8.3 php8.3-fpm php8.3-mysql php8.3-curl php8.3-zip php8.3-mbstring php8.3-xml php8.3-cli
+apt install -y certbot python3-certbot-nginx
+
+# Jika database dihapus → install ulang MariaDB
+if [[ "$NUKE_DB" == "yes" ]]; then
+    apt install -y mariadb-server
+fi
+
+systemctl enable --now nginx
+systemctl enable --now php8.3-fpm
+systemctl enable --now mariadb || true
+
+ok "Web layer reinstall selesai"
+
+###############################################################################
+# 6. REBUILD NGINX SITE
+###############################################################################
+line
+info "[6] Rebuild Nginx VirtualHost"
+
+mkdir -p /etc/nginx/snippets
+
+cat > /etc/nginx/snippets/paserexpress-headers.conf <<EOF
+add_header X-Frame-Options "SAMEORIGIN" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+EOF
+
+rm -f "$CONF" "$SYMLINK"
+
+cat > "$CONF" <<EOF
+server {
+    listen 80;
+    server_name $DOMAIN;
+
+    root $PUBLIC;
+    index index.php index.html;
+
+    include /etc/nginx/snippets/paserexpress-headers.conf;
+
+    location / {
+        try_files \$uri \$uri/ /index.php?\$query_string;
+    }
+
+    location ~ \.php\$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+}
+EOF
+
+ln -sf "$CONF" "$SYMLINK"
+
+nginx -t || fail "Nginx gagal test config"
+systemctl restart nginx
+
+ok "VirtualHost dibangun ulang"
+
+###############################################################################
+# 7. FIX PERMISSIONS
+###############################################################################
+line
+info "[7] Fix Permissions"
+
+if [[ -d "$ROOT_DIR" ]]; then
+    chown -R www-data:www-data "$ROOT_DIR"
+    find "$ROOT_DIR" -type d -exec chmod 755 {} \;
+    find "$ROOT_DIR" -type f -exec chmod 644 {} \;
+    ok "Permission aplikasi diperbaiki"
+else
+    warn "$ROOT_DIR tidak ditemukan (mungkin dihapus)."
+fi
+
+###############################################################################
+# 8. INSTAL ULANG SCHEMA (jika DB dihapus)
+###############################################################################
+if [[ "$NUKE_DB" == "yes" ]]; then
+line
+info "[8] Rebuild Database Schema"
+
+SCHEMA="$ROOT_DIR/config/schema.sql"
+
+if [[ -f "$SCHEMA" ]]; then
+    mysql -e "CREATE DATABASE paserexpress DEFAULT CHARSET utf8mb4;"
+    mysql paserexpress < "$SCHEMA"
+    ok "Schema database berhasil diimport"
+else
+    warn "schema.sql tidak ditemukan"
+fi
+fi
+
+###############################################################################
+# 9. SSL RENEW / REISSUE
+###############################################################################
+line
+info "[9] Reissue SSL"
+
+certbot --nginx -d "$DOMAIN" -m "admin@$DOMAIN" --agree-tos --non-interactive || warn "SSL gagal dibuat"
+
+###############################################################################
+# 10. FINAL TEST
+###############################################################################
+line
+info "[10] FINAL HEALTH CHECK"
+
+curl -Is "http://$DOMAIN" | head -n1 | grep -q 200 && ok "HTTP OK" || warn "HTTP FAIL"
+curl -Is "https://$DOMAIN" | head -n1 | grep -q 200 && ok "HTTPS OK" || warn "HTTPS FAIL"
+
+systemctl is-active --quiet php8.3-fpm && ok "PHP-FPM OK" || fail "PHP-FPM FAIL"
+systemctl is-active --quiet nginx && ok "NGINX OK" || fail "NGINX FAIL"
+systemctl is-active --quiet mariadb && ok "MARIADB OK" || warn "MARIADB FAIL (jika DB dihapus)"
+
+line
+echo -e "${GREEN}HEALTHFIX NUCLEAR SELESAI${RESET}"
+echo -e "Seluruh web layer berhasil dihancurkan & dibangun ulang."
+echo -e "Log: $LOG"
+echo ""
+exit 0
