@@ -11,3 +11,21 @@ CREATE TABLE IF NOT EXISTS users (
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+  CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    pickup TEXT,
+    dropoff TEXT,
+    price INT,
+    status VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS tracking (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    lat DOUBLE,
+    lng DOUBLE,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
