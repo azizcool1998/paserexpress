@@ -1,28 +1,31 @@
 <?php
-declare(strict_types=1);
 require_once __DIR__ . '/../includes/bootstrap.php';
 
-$page = $_GET['page'] ?? 'welcome';
+$page = $_GET['page'] ?? 'home';
 
-$routes = [
-  'welcome' => __DIR__ . '/../pages/welcome.php',
-  'tracking' => __DIR__ . '/../pages/tracking.php',
-  'login' => __DIR__ . '/../pages/login.php',
-  'logout' => __DIR__ . '/../pages/logout.php',
+switch ($page) {
 
-  // admin
-  'admin_dashboard' => __DIR__ . '/../pages/admin/dashboard.php',
-  'admin_users' => __DIR__ . '/../pages/admin/users.php',
-  'admin_user_form' => __DIR__ . '/../pages/admin/user_form.php',
-];
+    case "login":
+        (new AuthController)->login();
+        break;
 
-require __DIR__ . '/../includes/layout_header.php';
+    case "logout":
+        (new AuthController)->logout();
+        break;
 
-if (!isset($routes[$page])) {
-    http_response_code(404);
-    echo "<h1>404</h1><p>Halaman tidak ditemukan.</p>";
-} else {
-    require $routes[$page];
+    case "admin_dashboard":
+        (new AdminController)->dashboard();
+        break;
+
+    case "pelanggan_dashboard":
+        (new PelangganController)->dashboard();
+        break;
+
+    case "driver_dashboard":
+        (new DriverController)->dashboard();
+        break;
+
+    default:
+        echo "<h2>PaserExpress Running</h2>";
+        echo "Page: <b>" . sanitize($page) . "</b>";
 }
-
-require __DIR__ . '/../includes/layout_footer.php';
