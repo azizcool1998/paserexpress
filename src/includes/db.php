@@ -1,22 +1,25 @@
 <?php
-declare(strict_types=1);
+function env($key, $default = null) {
+    $value = getenv($key);
+    if ($value === false) return $default;
+    return $value;
+}
 
-function db(): PDO {
-    static $pdo = null;
-    if ($pdo) return $pdo;
+function db() {
+    $host = env('DB_HOST', '127.0.0.1');
+    $name = env('DB_NAME');
+    $user = env('DB_USER');
+    $pass = env('DB_PASS');   // WAJIB ADA
+    $port = env('DB_PORT', 3306);
 
-    $host = env_get('DB_HOST', '127.0.0.1');
-    $port = env_get('DB_PORT', '3306');
-    $name = env_get('DB_NAME', 'mydb');
-    $user = env_get('DB_USER', 'root');
-    $pass = env_get('DB_PASS', '');
+    if (!$name || !$user || $pass === null) {
+        throw new Exception("Database environment variables missing");
+    }
 
     $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
 
-    $pdo = new PDO($dsn, $user, $pass, [
+    return new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
-
-    return $pdo;
 }
