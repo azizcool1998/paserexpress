@@ -18,6 +18,11 @@ need_root(){
 
 need_cmd(){ command -v "$1" >/dev/null 2>&1 || err "Command not found: $1"; }
 
+# Default values to prevent unbound variable errors
+SSH_P1="22"
+SSH_P2="9898"
+SSH_P3=""
+
 # =========================
 # Validasi REGEX DOMAIN
 # =========================
