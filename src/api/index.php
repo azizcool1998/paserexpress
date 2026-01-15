@@ -10,6 +10,8 @@ $routes = [
     "order/create"       => ["OrderApi", "create"],
     "order/list"         => ["OrderApi", "my_orders"],
     "tracking/get"       => ["TrackingApi", "track"],
+    "admin/users"       => ["UserApi", "all"],
+    "admin/create_driver" => ["UserApi", "create_driver"],
 ];
 
 if (!isset($routes[$endpoint])) {
