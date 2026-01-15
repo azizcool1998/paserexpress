@@ -1,0 +1,46 @@
+{
+  "info": {
+    "name": "PaserExpress API",
+    "_postman_id": "paserexpress-001",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth Login",
+      "request": {
+        "method": "POST",
+        "url": "{{HOST}}/api/index.php?endpoint=auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n\"username\": \"admin\",\n\"password\": \"admin123\"\n}",
+          "options": {"raw": {"language":"json"}}
+        }
+      }
+    },
+    {
+      "name": "User Profile",
+      "request": {
+        "method": "GET",
+        "url": "{{HOST}}/api/index.php?endpoint=user/profile",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{TOKEN}}"}
+        ]
+      }
+    },
+    {
+      "name": "Create Order",
+      "request": {
+        "method": "POST",
+        "url": "{{HOST}}/api/index.php?endpoint=order/create",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{TOKEN}}"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n\"pickup\":\"Lokasi A\",\n\"dropoff\":\"Lokasi B\",\n\"price\":15000\n}",
+          "options":{"raw":{"language":"json"}}
+        }
+      }
+    }
+  ]
+}
