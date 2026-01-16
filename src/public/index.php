@@ -52,6 +52,18 @@ switch ($page) {
         (new BackupController)->setInterval();
         break;
 
+    case "admin_update":
+    (new UpdateController)->index();
+    break;
+
+    case "update_check":
+        (new UpdateController)->checkUpdate();
+        break;
+
+    case "update_run":
+        (new UpdateController)->runUpdate();
+        break;
+
     default:
         echo "<h2>PaserExpress Running</h2>";
         echo "Page: <b>" . sanitize($page) . "</b>";
