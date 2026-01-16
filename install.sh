@@ -281,6 +281,57 @@ setup_https(){
 
   return 0
 }
+
+# ============================================================
+# DOWNLOAD & INSTALL BACKUP SCRIPT
+# ============================================================
+install_backup_script() {
+    local url="https://raw.githubusercontent.com/azizcool1998/paserexpress/main/scripts/paserexpress-backup.sh"
+    local target="/usr/local/bin/paserexpress-backup.sh"
+
+    info "Mengambil script auto-backup dari GitHub..."
+
+    mkdir -p /var/backups/paserexpress
+
+    if curl -fsSL "$url" -o "$target"; then
+        chmod +x "$target"
+        info "Backup script terpasang: $target"
+    else
+        warn "Gagal mengambil backup script dari GitHub!"
+    fi
+}
+
+# ============================================================
+# VERIFY BACKUP SCRIPT (AUTO-HEAL)
+# ============================================================
+verify_backup_script() {
+    local target="/usr/local/bin/paserexpress-backup.sh"
+
+    if [[ ! -f "$target" ]]; then
+        warn "Backup script hilang! Memulihkan ulang dari GitHub..."
+        install_backup_script
+    fi
+}
+
+# ============================================================
+# CRON BACKUP PLACEHOLDER (NON-AKTIF)
+# ============================================================
+setup_backup_cron() {
+    local CRON_FILE="/etc/cron.d/paserexpress-backup"
+
+    cat > "$CRON_FILE" <<EOF
+# PaserExpress Auto Backup
+# Auto-backup: NON-AKTIF
+# Silakan atur interval melalui Admin Panel nanti.
+# Contoh format:
+# */5 * * * * root /usr/local/bin/paserexpress-backup.sh
+EOF
+
+    chmod 644 "$CRON_FILE"
+    info "Cron auto-backup disiapkan (nonaktif)."
+}
+
+
 # =========================
 # MAIN INSTALLER
 # =========================
@@ -334,6 +385,13 @@ systemctl reload nginx
 if [[ "$AUTO_HTTPS" == "y" ]]; then
   setup_https "$WEB_DOMAIN" "$ADMIN_EMAIL" && systemctl reload nginx
 fi
+
+# =========================================
+# Install Backup Script + Self-Heal + Cron
+# =========================================
+install_backup_script
+verify_backup_script
+setup_backup_cron
 
 info "=== INSTALASI SELESAI ==="
 echo "Website: http://${WEB_DOMAIN}"
