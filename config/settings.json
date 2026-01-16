@@ -1,0 +1,7 @@
+{
+    "APP_NAME": "Paser Express",
+    "APP_BASE_URL": "http://localhost",
+    "NODE_DOMAIN": "",
+    "BACKUP_ENABLED": "no",
+    "BACKUP_INTERVAL": "1d"
+}
