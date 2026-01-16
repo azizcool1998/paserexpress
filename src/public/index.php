@@ -39,6 +39,18 @@ switch ($page) {
     case "driver_dashboard":
         (new DriverController)->dashboard();
         break;
+    
+    case "admin_backup":
+        (new BackupController)->index();
+        break;
+
+    case "backup_set_status":
+        (new BackupController)->setStatus();
+        break;
+
+    case "backup_set_interval":
+        (new BackupController)->setInterval();
+        break;
 
     default:
         echo "<h2>PaserExpress Running</h2>";
