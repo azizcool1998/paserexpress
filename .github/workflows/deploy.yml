@@ -1,0 +1,43 @@
+name: Auto Deploy PaserExpress
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
+    - name: Add VPS to known_hosts
+      run: ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Backup Before Deploy
+      run: ssh root@${{ secrets.VPS_HOST }} "bash /usr/local/bin/paserexpress-backup.sh --quick"
+
+    - name: Deploy
+      run: |
+        ssh root@${{ secrets.VPS_HOST }} "\
+          cd /var/www/paserexpress && \
+          git fetch --all && git reset --hard origin/main && \
+          chmod -R 755 /var/www/paserexpress && \
+          systemctl reload php8.3-fpm && \
+          systemctl reload nginx \
+        "
+
+    - name: Verify Deployment
+      run: ssh root@${{ secrets.VPS_HOST }} "curl -f http://localhost"
+
+    - name: Rollback if Failed
+      if: failure()
+      run: ssh root@${{ secrets.VPS_HOST }} "bash /usr/local/bin/paserexpress-backup.sh --rollback"
