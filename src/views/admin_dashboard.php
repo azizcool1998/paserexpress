@@ -26,6 +26,10 @@
     <p><strong>Loading monitoring data...</strong></p>
 </div>
 
+<div class="mt-3">
+    <a href="?page=admin_update" class="btn btn-warning">🚀 Update PaserExpress</a>
+</div>
+
 <script>
 async function loadMonitoring() {
     const res = await fetch("?page=api_monitoring");
