@@ -7,19 +7,40 @@
 
 <h2>Login</h2>
 
-<?php if (!empty($error)): ?>
-<p style="color:red"><?= sanitize($error) ?></p>
-<?php endif; ?>
+<?php $title = "Login — PaserExpress"; ob_start(); ?>
 
-<form method="post">
-    <label>Username</label><br>
-    <input name="username" required><br><br>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
 
-    <label>Password</label><br>
-    <input type="password" name="password" required><br><br>
+        <div class="god-card p-4">
+            <h3 class="text-center mb-4 fw-bold">
+                <i class="bi bi-shield-lock-fill"></i> Login
+            </h3>
 
-    <button>Login</button>
-</form>
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
 
-</body>
-</html>
+            <form method="post">
+
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" required />
+                </div>
+
+                <button class="btn btn-god-primary w-100">
+                    Login <i class="bi bi-box-arrow-in-right"></i>
+                </button>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<?php $content = ob_get_clean(); include __DIR__ . "/layout.php"; ?>
