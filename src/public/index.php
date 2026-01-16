@@ -84,13 +84,17 @@ switch ($page) {
         (new LogController)->clear();
         break;
 
-    case "api_monitoring_pro":
-        require __DIR__ . "/../api/monitoring_pro.php";
+    case "admin_monitoring":
+        (new AdminController)->monitoring();
+        break;
+
+    case "api_monitoring_ultra":
+        require __DIR__ . "/../api/api_monitoring_ultra.php";
         exit;
 
-    case "admin_monitoring":
-        require __DIR__ . "/../views/admin_monitoring.php";
-        break;
+    case "api_monitoring_actions":
+        require __DIR__ . "/../api/api_monitoring_actions.php";
+        exit;
 
     case "admin_backup":
         (new AdminController)->backupSettings();
