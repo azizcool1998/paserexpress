@@ -4,113 +4,109 @@ if (!isset($content)) $content = "";
 ?>
 
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-bs-theme="auto">
 <head>
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($title) ?></title>
 
-    <!-- Bootstrap 5.3 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
 
     <!-- GOD UI CSS -->
-    <link rel="stylesheet" href="/assets/god-ui.css">
+    <link rel="stylesheet" href="/css/god-ui.css?v=1">
+
+    <!-- Theme JS -->
+    <script src="/js/theme.js" defer></script>
 </head>
 
-<body class="god-body d-flex">
+<body class="d-flex">
 
-<!-- ====================== -->
-<!-- 📌 SIDEBAR GOD EDITION -->
-<!-- ====================== -->
-<nav id="sidebar" class="god-sidebar">
+<!-- SIDEBAR -->
+<nav id="sidebar" class="sidebar-god bg-dark text-white">
     <div class="sidebar-header text-center py-4">
         <i class="bi bi-lightning-charge-fill fs-2"></i>
         <h4 class="mt-2 fw-bold">PaserExpress</h4>
     </div>
 
-    <ul class="god-nav">
-        <li><a href="?page=admin_dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-        <li><a href="?page=admin_monitoring"><i class="bi bi-activity"></i> Monitoring PRO</a></li>
-        <li><a href="?page=admin_users"><i class="bi bi-people-fill"></i> Manage Users</a></li>
-        <li><a href="?page=admin_backup"><i class="bi bi-cloud-arrow-down-fill"></i> Backups</a></li>
-        <li><a href="?page=admin_settings"><i class="bi bi-gear-fill"></i> Settings</a></li>
+    <ul class="nav flex-column mt-3">
+        <li class="nav-item">
+            <a href="?page=admin_dashboard" class="nav-link">
+                <i class="bi bi-speedometer2 me-2"></i> Dashboard
+            </a>
+        </li>
 
-        <li class="mt-auto">
-            <a href="?page=logout" class="text-danger fw-bold">
-                <i class="bi bi-box-arrow-right"></i> Logout
+        <li class="nav-item">
+            <a href="?page=admin_monitoring" class="nav-link">
+                <i class="bi bi-activity me-2"></i> Monitoring PRO
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="?page=admin_users" class="nav-link">
+                <i class="bi bi-people-fill me-2"></i> Users
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="?page=admin_backup" class="nav-link">
+                <i class="bi bi-cloud-arrow-down-fill me-2"></i> Backups
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="?page=admin_settings" class="nav-link">
+                <i class="bi bi-gear-fill me-2"></i> Settings
+            </a>
+        </li>
+
+        <li class="nav-item mt-auto">
+            <a href="?page=logout" class="nav-link text-danger">
+                <i class="bi bi-box-arrow-right me-2"></i> Logout
             </a>
         </li>
     </ul>
 </nav>
 
-<!-- ====================== -->
-<!-- 🌈 MAIN CONTENT AREA   -->
-<!-- ====================== -->
-<div class="flex-grow-1 god-main">
+<!-- MAIN CONTENT -->
+<div class="flex-grow-1 wrapper-god">
 
-    <!-- ====================== -->
-    <!-- 🌤 GOD NAVBAR -->
-    <!-- ====================== -->
-    <nav class="god-navbar shadow-sm px-3 d-flex align-items-center">
-        <button class="btn btn-outline-light me-3" id="sidebarToggle">
-            <i class="bi bi-list"></i>
-        </button>
+    <!-- TOP NAVBAR -->
+    <nav class="navbar navbar-expand-lg god-topbar shadow-sm px-3">
+        <div class="container-fluid">
 
-        <span class="navbar-brand fw-bold">Admin Panel</span>
-
-        <div class="ms-auto d-flex align-items-center gap-3">
-
-            <!-- Theme Switch -->
-            <button class="btn btn-outline-primary" onclick="toggleTheme()">
-                <i class="bi bi-brightness-high"></i>
+            <button class="btn btn-outline-secondary me-3" id="sidebarToggle">
+                <i class="bi bi-list fs-5"></i>
             </button>
 
-            <div class="god-username">
-                <i class="bi bi-person-circle"></i>
-                <?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?>
+            <span class="navbar-brand fw-bold">Admin Panel</span>
+
+            <div class="ms-auto">
+                <!-- Theme Switch -->
+                <button id="themeToggle" class="btn btn-outline-primary">
+                    <i class="bi bi-sun-fill theme-icon-active"></i>
+                    <i class="bi bi-moon-stars-fill theme-icon-dark"></i>
+                </button>
             </div>
         </div>
     </nav>
 
-    <!-- ====================== -->
-    <!-- 📦 PAGE CONTENT -->
-    <!-- ====================== -->
-    <div class="container py-4">
+    <!-- PAGE CONTENT -->
+    <div class="container py-4 god-content">
         <?= $content ?>
     </div>
 
-    <!-- ====================== -->
-    <!-- 🦶 FOOTER -->
-    <!-- ====================== -->
-    <footer class="god-footer text-center py-3">
-        PaserExpress © <?= date("Y") ?> — God UI Edition
-    </footer>
 </div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Sidebar Toggle -->
 <script>
+// Sidebar toggle
 document.getElementById("sidebarToggle").onclick = function () {
     document.getElementById("sidebar").classList.toggle("expanded");
 };
-</script>
-
-<!-- Theme Controller -->
-<script>
-function toggleTheme() {
-    let html = document.documentElement;
-    let theme = html.getAttribute("data-theme");
-    html.setAttribute("data-theme", theme === "dark" ? "light" : "dark");
-    localStorage.setItem("paser_theme", html.getAttribute("data-theme"));
-}
-document.addEventListener("DOMContentLoaded", () => {
-    let saved = localStorage.getItem("paser_theme");
-    if (saved) document.documentElement.setAttribute("data-theme", saved);
-});
 </script>
 
 </body>
