@@ -103,6 +103,10 @@ switch ($page) {
     case "admin_backup_run":
         (new AdminController)->backupRunNow();
         break;
+
+    case "admin_update":
+        require_once __DIR__ . "/../api/update.php";
+        exit;
     
     default:
         echo "<h2>PaserExpress Running</h2>";
