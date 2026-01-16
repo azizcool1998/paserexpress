@@ -2,18 +2,17 @@
 set -euo pipefail
 
 # =========================
-# PaserExpress Installer FINAL (Part 1)
+# PaserExpress Installer FINAL
 # =========================
 
 info(){ echo -e "\n[INFO] $*"; }
 warn(){ echo -e "\n[WARN] $*"; }
 err(){ echo -e "\n[ERR ] $*" >&2; exit 1; }
-
 trim(){ echo -n "$1" | xargs; }
 
 need_root(){
   if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
-    err "Jalankan sebagai ROOT. Gunakan: sudo bash <(curl -fsSL ...)"
+    err "Jalankan sebagai ROOT."
   fi
 }
 
@@ -30,12 +29,12 @@ ask_yn() {
     case "$ans" in
       y|yes|1|true) echo "y"; return 0 ;;
       n|no|0|false) echo "n"; return 0 ;;
-      *) warn "Input tidak valid. Gunakan y/n." ;;
+      *) warn "Input invalid. Gunakan y/n." ;;
     esac
   done
 }
 
-ask_secret() {
+ask_secret(){
   local prompt="$1"
   local v
   while true; do
@@ -47,7 +46,26 @@ ask_secret() {
 }
 
 # =========================
-# DOMAIN VALIDATION FINAL
+# ASK PORT (BENAR!)
+# =========================
+ask_port() {
+  local prompt="$1"
+  local port=""
+  while true; do
+    read -rp "${prompt}: " port
+    port="$(trim "$port")"
+
+    if [[ "$port" =~ ^[0-9]{4,5}$ ]] && (( port >= 1024 && port <= 65535 )); then
+      echo "$port"
+      return 0
+    fi
+
+    warn "Port harus 1024–65535"
+  done
+}
+
+# =========================
+# DOMAIN VALIDATION
 # =========================
 
 valid_domain_regex='^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$'
@@ -55,55 +73,43 @@ valid_domain_regex='^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$'
 ask_domain() {
   local prompt="$1"
   local domain=""
-
   while true; do
     read -rp "${prompt}: " domain
     domain="$(trim "$domain")"
 
-    if [[ -z "$domain" ]]; then
-      warn "Domain tidak boleh kosong."
-      continue
-    fi
+    if [[ -z "$domain" ]]; then warn "Domain tidak boleh kosong."; continue; fi
+    if [[ "$domain" =~ $valid_domain_regex ]]; then echo "$domain"; return 0; fi
 
-    if [[ "$domain" =~ $valid_domain_regex ]]; then
-      echo "$domain"
-      return 0
-    else
-      warn "Format domain salah!"
-      warn "Contoh domain valid:"
-      warn "  example.com"
-      warn "  api.example.com"
-      warn "  web.aziztech.us"
-    fi
+    warn "Domain tidak valid! Gunakan format:"
+    warn " - example.com"
+    warn " - api.example.com"
+    warn " - web.aziztech.us"
   done
 }
-# =========================
-# SSHD PORT CONFIG
-# =========================
 
+# =========================
+# SSH CONFIG
+# =========================
 configure_sshd_ports(){
   local p1="$1"
   local p2="$2"
   local p3="$3"
 
-  local dropin="/etc/ssh/sshd_config.d/99-paserexpress.conf"
-  info "Menulis SSHD drop-in: ${dropin}"
-
   mkdir -p /etc/ssh/sshd_config.d
-  cat > "$dropin" <<EOF
+
+  cat >/etc/ssh/sshd_config.d/99-paserexpress.conf <<EOF
 Port ${p1}
 Port ${p2}
 Port ${p3}
 EOF
 
-  sshd -t || err "Konfigurasi SSH salah! Tidak jadi restart."
+  sshd -t || err "Konfigurasi SSH salah!"
   systemctl restart ssh || systemctl restart sshd
 }
 
 # =========================
-# FIREWALL (UFW)
+# FIREWALL
 # =========================
-
 configure_ufw(){
   local want_https="$1"
   local s1="$2"
@@ -116,7 +122,6 @@ configure_ufw(){
   ufw allow "${s2}/tcp"
   ufw allow "${s3}/tcp"
   ufw allow 80/tcp
-
   [[ "$want_https" == "y" ]] && ufw allow 443/tcp
 
   ufw --force enable
@@ -125,10 +130,8 @@ configure_ufw(){
 # =========================
 # Nginx Snippets
 # =========================
-
 write_headers_snippet(){
-  mkdir -p /etc/nginx/snippets
-  cat >/etc/nginx/snippets/paserexpress-headers.conf <<'EOF'
+cat >/etc/nginx/snippets/paserexpress-headers.conf <<'EOF'
 add_header X-Frame-Options "SAMEORIGIN";
 add_header X-Content-Type-Options "nosniff";
 add_header Referrer-Policy "strict-origin-when-cross-origin";
@@ -136,23 +139,20 @@ EOF
 }
 
 write_hsts_snippet(){
-  mkdir -p /etc/nginx/snippets
-  cat >/etc/nginx/snippets/paserexpress-hsts.conf <<'EOF'
+cat >/etc/nginx/snippets/paserexpress-hsts.conf <<'EOF'
 add_header Strict-Transport-Security "max-age=31536000" always;
 EOF
 }
 
 # =========================
-# NGINX HTTP SITE
+# NGINX SITE
 # =========================
-
 write_nginx_http_site(){
   local domain="$1"
   local app_root="$2"
-  local conf="/etc/nginx/sites-available/${domain}.conf"
   local pub="${app_root}/src/public"
 
-  cat > "$conf" <<NGINX
+  cat >/etc/nginx/sites-available/${domain}.conf <<NGINX
 server {
     listen 80;
     server_name ${domain};
@@ -173,14 +173,13 @@ server {
 }
 NGINX
 
-  ln -sf "$conf" /etc/nginx/sites-enabled/"${domain}.conf"
+  ln -sf "/etc/nginx/sites-available/${domain}.conf" "/etc/nginx/sites-enabled/${domain}.conf"
   rm -f /etc/nginx/sites-enabled/default || true
 }
 
 # =========================
-# ENV WRITER
+# ENV
 # =========================
-
 write_env(){
   local app="$1"
   local web="$2"
@@ -190,33 +189,32 @@ write_env(){
   local dbdom="$6"
   local dbmail="$7"
   local node="$8"
-  local admu="$9"
-  local admp="${10}"
-  local adme="${11}"
+  local adu="$9"
+  local adp="${10}"
+  local ade="${11}"
   local adf="${12}"
   local adl="${13}"
   local adw="${14}"
   local tele="${15}"
 
-  cat > "${app}/.env" <<EOF
+cat > "${app}/.env" <<EOF
 APP_NAME="Paser Express"
 APP_ENV=production
 APP_DEBUG=false
-
 APP_BASE_URL=http://${web}
 
 DB_HOST=127.0.0.1
 DB_NAME=${dbn}
 DB_USER=${dbu}
 DB_PASS=${dbp}
-DB_EMAIL=${dbmail}
 DB_DOMAIN=${dbdom}
+DB_EMAIL=${dbmail}
 
 NODE_DOMAIN=${node}
 
-ADMIN_USERNAME=${admu}
-ADMIN_PASSWORD=${admp}
-ADMIN_EMAIL=${adme}
+ADMIN_USERNAME=${adu}
+ADMIN_PASSWORD=${adp}
+ADMIN_EMAIL=${ade}
 ADMIN_FIRST_NAME=${adf}
 ADMIN_LAST_NAME=${adl}
 ADMIN_WHATSAPP=${adw}
@@ -224,8 +222,12 @@ ADMIN_WHATSAPP=${adw}
 TELEMETRY_ENABLED=${tele}
 EOF
 
-  chmod 600 "${app}/.env"
+chmod 600 "${app}/.env"
 }
+
+# =========================
+# GIT DEPLOY
+# =========================
 deploy_app(){
   local root="$1"
   local repo="$2"
@@ -239,6 +241,9 @@ deploy_app(){
   fi
 }
 
+# =========================
+# DATABASE
+# =========================
 setup_db(){
   local app="$1"
   local name="$2"
@@ -248,89 +253,53 @@ setup_db(){
   mysql -e "CREATE DATABASE IF NOT EXISTS \`${name}\`;"
   mysql -e "CREATE USER IF NOT EXISTS '${user}'@'localhost' IDENTIFIED BY '${pass}';"
   mysql -e "GRANT ALL PRIVILEGES ON \`${name}\`.* TO '${user}'@'localhost'; FLUSH PRIVILEGES;"
-
   mysql -u"$user" -p"$pass" "$name" < "${app}/config/schema.sql"
 }
 
+# =========================
+# ADMIN SEED
+# =========================
 seed_admin(){
   local root="$1"
-  local u="$2"
-  local p="$3"
-  local e="$4"
-  local f="$5"
-  local l="$6"
-  local w="$7"
-
   php "${root}/src/cli/seed_admin.php" \
-    --username="$u" \
-    --password="$p" \
-    --email="$e" \
-    --first="$f" \
-    --last="$l" \
-    --wa="$w"
+    --username="$2" \
+    --password="$3" \
+    --email="$4" \
+    --first="$5" \
+    --last="$6" \
+    --wa="$7"
 }
 
+# =========================
+# HTTPS
+# =========================
 setup_https(){
-  local domain="$1"
-  local email="$2"
-
   apt-get install -y certbot python3-certbot-nginx
-
-  certbot --nginx -d "$domain" \
-    --non-interactive --agree-tos -m "$email" || return 1
-
-  return 0
+  certbot --nginx -d "$1" --non-interactive --agree-tos -m "$2" || return 1
 }
 
 # ============================================================
-# DOWNLOAD & INSTALL BACKUP SCRIPT
+# BACKUP SYSTEM (FINAL)
 # ============================================================
+
 install_backup_script() {
     local url="https://raw.githubusercontent.com/azizcool1998/paserexpress/main/scripts/paserexpress-backup.sh"
     local target="/usr/local/bin/paserexpress-backup.sh"
-
-    info "Mengambil script auto-backup dari GitHub..."
-
     mkdir -p /var/backups/paserexpress
-
-    if curl -fsSL "$url" -o "$target"; then
-        chmod +x "$target"
-        info "Backup script terpasang: $target"
-    else
-        warn "Gagal mengambil backup script dari GitHub!"
-    fi
+    curl -fsSL "$url" -o "$target" && chmod +x "$target"
 }
 
-# ============================================================
-# VERIFY BACKUP SCRIPT (AUTO-HEAL)
-# ============================================================
 verify_backup_script() {
-    local target="/usr/local/bin/paserexpress-backup.sh"
-
-    if [[ ! -f "$target" ]]; then
-        warn "Backup script hilang! Memulihkan ulang dari GitHub..."
-        install_backup_script
-    fi
+    [[ -f /usr/local/bin/paserexpress-backup.sh ]] || install_backup_script
 }
 
-# ============================================================
-# CRON BACKUP PLACEHOLDER (NON-AKTIF)
-# ============================================================
 setup_backup_cron() {
-    local CRON_FILE="/etc/cron.d/paserexpress-backup"
-
-    cat > "$CRON_FILE" <<EOF
-# PaserExpress Auto Backup
-# Auto-backup: NON-AKTIF
-# Silakan atur interval melalui Admin Panel nanti.
-# Contoh format:
-# */5 * * * * root /usr/local/bin/paserexpress-backup.sh
+cat > /etc/cron.d/paserexpress-backup <<EOF
+# Auto-backup: NONAKTIF.
+# Ubah interval melalui Admin Panel nanti.
 EOF
-
-    chmod 644 "$CRON_FILE"
-    info "Cron auto-backup disiapkan (nonaktif)."
+chmod 644 /etc/cron.d/paserexpress-backup
 }
-
 
 # =========================
 # MAIN INSTALLER
@@ -340,11 +309,11 @@ need_root
 
 SSH_P1="22"
 SSH_P2="9898"
-SSH_P3="$(ask_domain 'Masukkan port SSH ke-3 (1024-65535)')"
+SSH_P3="$(ask_port 'Masukkan port SSH ke-3 (1024-65535)')"
 
-WEB_DOMAIN="$(ask_domain 'Masukkan domain WEBSITE')"
-DB_DOMAIN="$(ask_domain 'Masukkan domain DATABASE')"
-NODE_DOMAIN="$(ask_domain 'Masukkan domain NODE')"
+WEB_DOMAIN="$(ask_domain 'Domain WEBSITE')"
+DB_DOMAIN="$(ask_domain 'Domain DATABASE')"
+NODE_DOMAIN="$(ask_domain 'Domain NODE')"
 
 APP_ROOT="/var/www/paserexpress"
 
@@ -360,7 +329,7 @@ ADMIN_EMAIL="admin@${WEB_DOMAIN}"
 ADMIN_WA="62000000"
 ADMIN_PASS="$(ask_secret 'Password admin')"
 
-AUTO_HTTPS="$(ask_yn 'Enable HTTPS otomatis?' 'y')"
+AUTO_HTTPS="$(ask_yn 'Aktifkan HTTPS?' 'y')"
 TELEMETRY="yes"
 
 apt-get update -y
@@ -376,23 +345,17 @@ write_env "$APP_ROOT" "$WEB_DOMAIN" "$DB_NAME" "$DB_USER" "$DB_PASS" "$DB_DOMAIN
   "$ADMIN_USERNAME" "$ADMIN_PASS" "$ADMIN_EMAIL" "$ADMIN_FIRST" "$ADMIN_LAST" "$ADMIN_WA" "$TELEMETRY"
 
 setup_db "$APP_ROOT" "$DB_NAME" "$DB_USER" "$DB_PASS"
-
 seed_admin "$APP_ROOT" "$ADMIN_USERNAME" "$ADMIN_PASS" "$ADMIN_EMAIL" "$ADMIN_FIRST" "$ADMIN_LAST" "$ADMIN_WA"
 
 write_nginx_http_site "$WEB_DOMAIN" "$APP_ROOT"
 systemctl reload nginx
 
-if [[ "$AUTO_HTTPS" == "y" ]]; then
-  setup_https "$WEB_DOMAIN" "$ADMIN_EMAIL" && systemctl reload nginx
-fi
+[[ "$AUTO_HTTPS" == "y" ]] && setup_https "$WEB_DOMAIN" "$ADMIN_EMAIL" && systemctl reload nginx
 
-# =========================================
-# Install Backup Script + Self-Heal + Cron
-# =========================================
 install_backup_script
 verify_backup_script
 setup_backup_cron
 
-info "=== INSTALASI SELESAI ==="
+info "=== INSTALLASI SELESAI ==="
 echo "Website: http://${WEB_DOMAIN}"
-echo "Admin Login: http://${WEB_DOMAIN}/?page=login"
+echo "Login Admin: http://${WEB_DOMAIN}/?page=login"
