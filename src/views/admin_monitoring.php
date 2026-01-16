@@ -1,79 +1,89 @@
-<h2>📊 Monitoring PRO (Realtime)</h2>
+<?php $title = "Monitoring PRO"; ob_start(); ?>
 
-<canvas id="cpu-chart" height="80"></canvas>
-<canvas id="ram-chart" height="80"></canvas>
-<canvas id="disk-chart" height="80"></canvas>
-<canvas id="net-chart" height="80"></canvas>
+<h2 class="fw-bold mb-4">
+    <i class="bi bi-activity"></i> Monitoring ULTRA PRO MAX
+</h2>
 
-<div id="status-box" style="margin-top:20px;color:white;background:#222;padding:15px;border-radius:10px;">
-    Loading...
+<div class="monitor-box" id="monitor-box">
+    <p><b>Loading monitoring data...</b></p>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-let cpuChart, ramChart, diskChart, netChart;
+async function loadMonitor() {
+    const res = await fetch("?page=api_monitoring");
+    const json = await res.json();
 
-function newChart(id, label) {
-    return new Chart(document.getElementById(id), {
-        type: "line",
-        data: {
-            labels: [],
-            datasets: [{
-                label,
-                data: [],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            scales: { y: { beginAtZero: true } }
-        }
-    });
-}
+    if (!json.success) {
+        document.getElementById("monitor-box").innerHTML =
+            "<div class='alert alert-danger'>Failed to load monitoring data.</div>";
+        return;
+    }
 
-function initCharts() {
-    cpuChart  = newChart("cpu-chart", "CPU %");
-    ramChart  = newChart("ram-chart", "RAM %");
-    diskChart = newChart("disk-chart", "Disk %");
-    netChart  = newChart("net-chart", "Network KB");
-}
+    const d = json.data;
 
-async function updateMonitoring() {
-    const res = await fetch("?page=api_monitoring_pro");
-    const j = await res.json();
+    document.getElementById("monitor-box").innerHTML = `
+        <h4 class="fw-bold mb-3">
+            System Overview <span class="text-muted fs-6">(${d.timestamp})</span>
+        </h4>
 
-    if (!j.success) return;
+        <div class="row">
 
-    const t = j.timestamp;
+            <div class="col-md-4">
+                <div class="widget-card text-center">
+                    <div class="fs-1">🖥️</div>
+                    <h5 class="fw-bold mt-2">CPU Load</h5>
+                    <p>${d.cpu_load['1min']} | ${d.cpu_load['5min']} | ${d.cpu_load['15min']}</p>
+                </div>
+            </div>
 
-    cpuChart.data.labels.push(t);
-    cpuChart.data.datasets[0].data.push(j.cpu["1m"]);
-    cpuChart.update();
+            <div class="col-md-4">
+                <div class="widget-card text-center">
+                    <div class="fs-1">💾</div>
+                    <h5 class="fw-bold mt-2">Memory</h5>
+                    <p>${d.ram.used_mb} MB / ${d.ram.total_mb} MB</p>
+                </div>
+            </div>
 
-    ramChart.data.labels.push(t);
-    ramChart.data.datasets[0].data.push(j.ram.percent);
-    ramChart.update();
+            <div class="col-md-4">
+                <div class="widget-card text-center">
+                    <div class="fs-1">📀</div>
+                    <h5 class="fw-bold mt-2">Disk</h5>
+                    <p>${d.disk.used_gb} GB / ${d.disk.total_gb} GB</p>
+                </div>
+            </div>
 
-    diskChart.data.labels.push(t);
-    diskChart.data.datasets[0].data.push(j.disk.percent);
-    diskChart.update();
+        </div>
 
-    netChart.data.labels.push(t);
-    netChart.data.datasets[0].data.push(j.network.rx_kb);
-    netChart.update();
+        <hr class="my-4">
 
-    document.getElementById("status-box").innerHTML = `
-        <b>Timestamp:</b> ${j.timestamp}<br>
-        <b>Uptime:</b> ${j.uptime}<br><br>
+        <h5 class="fw-bold">Services Status</h5>
+        <ul class="list-group mt-3">
+            <li class="list-group-item">
+                Nginx:
+                <b class="${d.services.nginx === 'running' ? 'text-success' : 'text-danger'}">
+                    ${d.services.nginx}
+                </b>
+            </li>
 
-        <b>Services:</b><br>
-        Nginx: <span style="color:${j.services.nginx === 'running' ? 'lightgreen':'red'}">${j.services.nginx}</span><br>
-        PHP-FPM: <span style="color:${j.services.php_fpm === 'running' ? 'lightgreen':'red'}">${j.services.php_fpm}</span><br>
-        MariaDB: <span style="color:${j.services.mariadb === 'running' ? 'lightgreen':'red'}">${j.services.mariadb}</span><br>
+            <li class="list-group-item">
+                PHP-FPM:
+                <b class="${d.services.php_fpm === 'running' ? 'text-success' : 'text-danger'}">
+                    ${d.services.php_fpm}
+                </b>
+            </li>
+
+            <li class="list-group-item">
+                MariaDB:
+                <b class="${d.services.mariadb === 'running' ? 'text-success' : 'text-danger'}">
+                    ${d.services.mariadb}
+                </b>
+            </li>
+        </ul>
     `;
 }
 
-initCharts();
-updateMonitoring();
-setInterval(updateMonitoring, 3000);
+loadMonitor();
+setInterval(loadMonitor, 10000);
 </script>
+
+<?php $content = ob_get_clean(); include __DIR__ . "/layout.php"; ?>
