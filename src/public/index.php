@@ -107,6 +107,14 @@ switch ($page) {
     case "admin_update":
         require_once __DIR__ . "/../api/update.php";
         exit;
+
+    case "admin_settings":
+        (new AdminSettingsController)->page();
+        break;
+
+    case "admin_settings_save":
+        (new AdminSettingsController)->save();
+        break;
     
     default:
         echo "<h2>PaserExpress Running</h2>";
