@@ -88,6 +88,10 @@ switch ($page) {
         require __DIR__ . "/../api/monitoring_pro.php";
         exit;
 
+    case "admin_monitoring":
+        require __DIR__ . "/../views/admin_monitoring.php";
+        break;
+
     default:
         echo "<h2>PaserExpress Running</h2>";
         echo "Page: <b>" . sanitize($page) . "</b>";
