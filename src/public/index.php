@@ -29,3 +29,9 @@ switch ($page) {
         echo "<h2>PaserExpress Running</h2>";
         echo "Page: <b>" . sanitize($page) . "</b>";
 }
+
+// API: Monitoring
+if ($page === 'api_monitoring') {
+    require_once __DIR__ . '/../api/monitoring.php';
+    exit;
+}
