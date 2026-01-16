@@ -64,6 +64,26 @@ switch ($page) {
         (new UpdateController)->runUpdate();
         break;
 
+    case "admin_logs":
+        (new LogController)->index();
+        break;
+
+    case "log_read":
+        (new LogController)->read();
+        break;
+
+    case "log_analyze":
+        (new LogController)->analyze();
+        break;
+
+    case "log_fix":
+        (new LogController)->fix();
+        break;
+
+    case "log_clear":
+        (new LogController)->clear();
+        break;
+
     default:
         echo "<h2>PaserExpress Running</h2>";
         echo "Page: <b>" . sanitize($page) . "</b>";
