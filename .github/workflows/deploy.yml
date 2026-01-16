@@ -7,51 +7,68 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to VPS
     runs-on: ubuntu-latest
 
     steps:
-
     - name: Checkout Repository
       uses: actions/checkout@v3
 
     # ============================================================
-    # 1. LOAD SSH PRIVATE KEY (Fixes libcrypto error)
+    # 1. Load SSH Private Key (FIX libcrypto)
     # ============================================================
-    - name: Load Private Key
+    - name: Setup SSH Key
       uses: webfactory/ssh-agent@v0.8.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     # ============================================================
-    # 2. ADD VPS HOST TO KNOWN HOSTS
+    # 2. Add VPS to known_hosts
     # ============================================================
-    - name: Add VPS Host Key
+    - name: Add VPS Key
       run: |
         mkdir -p ~/.ssh
         ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-        chmod 644 ~/.ssh/known_hosts
 
     # ============================================================
-    # 3. TEST SSH CONNECTION
+    # 3. Test SSH Connection
     # ============================================================
-    - name: Test SSH Connection
+    - name: Test SSH
       run: |
-        echo "Testing SSH..."
-        ssh -o BatchMode=yes -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo 'SSH OK from GitHub Actions'"
-      shell: bash
+        ssh -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo CONNECTED"
 
     # ============================================================
-    # 4. RUN DEPLOY SCRIPT IN VPS
+    # 4. Deploy langsung dari GitHub → VPS
     # ============================================================
-    - name: Execute Remote Deploy Script
+    - name: Deploy App to VPS
       run: |
-        echo "Running remote deploy script..."
-        ssh -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "bash /usr/local/bin/paserexpress-deploy.sh"
-      shell: bash
+        ssh -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+          set -e
+
+          echo '[1/5] Pull latest code...'
+          if [ -d /var/www/paserexpress ]; then
+            cd /var/www/paserexpress
+            git fetch --all
+            git reset --hard origin/main
+          else
+            git clone -b main https://github.com/${{ github.repository }} /var/www/paserexpress
+          fi
+
+          echo '[2/5] Set permissions...'
+          chown -R www-data:www-data /var/www/paserexpress
+          find /var/www/paserexpress -type d -exec chmod 755 {} \;
+          find /var/www/paserexpress -type f -exec chmod 644 {} \;
+
+          echo '[3/5] Reload PHP-FPM...'
+          systemctl reload php8.3-fpm || true
+
+          echo '[4/5] Reload Nginx...'
+          systemctl reload nginx || true
+
+          echo '[5/5] DEPLOY COMPLETE ✔'
+        "
 
     # ============================================================
-    # 5. SUCCESS
+    # 5. Success log
     # ============================================================
-    - name: Deployment Finished
-      run: echo "🎉 Deployment Completed Successfully!"
+    - name: Finish
+      run: echo "🚀 Deployment COMPLETED"
