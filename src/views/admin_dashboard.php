@@ -1,5 +1,5 @@
 <h2>Admin Dashboard</h2>
-
+<li><a href="?page=admin_monitoring">Monitoring PRO</a></li>
 <table border="1">
 <tr>
     <th>ID</th>
@@ -61,8 +61,6 @@ async function loadMonitoring() {
 loadMonitoring();
 setInterval(loadMonitoring, 15000);
 </script>
-
-<li><a href="?page=admin_monitoring">Monitoring PRO</a></li>
 
 
 </table>
