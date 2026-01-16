@@ -57,8 +57,8 @@ need_root(){
 ask_text(){
     local prompt="$1"
     local val=""
-    echo -e -n "${PURPLE}${BOLD}${prompt}${NC}\n> "
-    read -r val
+    echo -e "${PURPLE}${BOLD}${prompt}${NC}"
+    read -rp "> " val
     echo "$val"
 }
 
@@ -67,7 +67,7 @@ ask_password(){
     local val=""
     echo -e "${PINK}${BOLD}${prompt}${NC}"
     read -rsp "> " val
-    echo ""
+    echo
     echo "$val"
 }
 
