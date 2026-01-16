@@ -1,0 +1,140 @@
+/* =======================================================
+   PASEREXPRESS — GOD UI CSS
+   Full Premium Dashboard Theme
+   Supports Light/Dark Auto Mode
+   Compatible with Bootstrap 5.3
+   ======================================================= */
+
+:root {
+    --god-bg: #f8f9fa;
+    --god-text: #212529;
+    --god-card-bg: #ffffff;
+    --god-border: rgba(0,0,0,0.1);
+    --god-accent: #0d6efd;
+}
+
+[data-bs-theme="dark"] {
+    --god-bg: #0d1117;
+    --god-text: #e0e0e0;
+    --god-card-bg: #161b22;
+    --god-border: rgba(255,255,255,0.1);
+    --god-accent: #0d6efd;
+}
+
+body {
+    background: var(--god-bg);
+    color: var(--god-text);
+}
+
+/* SIDEBAR ---------------------------------- */
+#sidebar {
+    width: 260px;
+    background: #111;
+    transition: all 0.3s;
+    min-height: 100vh;
+    border-right: 1px solid #222;
+}
+
+#sidebar.expanded {
+    margin-left: -260px;
+}
+
+#sidebar .nav-link {
+    color: #bbb;
+    padding: 12px 18px;
+    transition: 0.2s;
+    font-size: 15px;
+}
+
+#sidebar .nav-link:hover,
+#sidebar .nav-link.active {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+}
+
+/* WRAPPER ---------------------------------- */
+.wrapper-god {
+    background: var(--god-bg);
+    transition: all 0.3s;
+}
+
+/* TOPBAR ----------------------------------- */
+.god-topbar {
+    background: var(--god-card-bg);
+    border-bottom: 1px solid var(--god-border);
+}
+
+/* CARD ------------------------------------- */
+.god-card {
+    background: var(--god-card-bg);
+    border: 1px solid var(--god-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: 0.25s;
+}
+
+.god-card:hover {
+    border-color: var(--god-accent);
+    transform: translateY(-2px);
+}
+
+/* TABLES ----------------------------------- */
+.table-god {
+    background: var(--god-card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.table-god thead {
+    background: rgba(0,0,0,0.05);
+}
+
+[data-bs-theme="dark"] .table-god thead {
+    background: rgba(255,255,255,0.05);
+}
+
+.table-god td,
+.table-god th {
+    padding: 12px;
+}
+
+/* BUTTON ----------------------------------- */
+.btn-god {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.btn-god-primary {
+    background: var(--god-accent);
+    color: #fff;
+    border: none;
+}
+
+.btn-god-primary:hover {
+    opacity: 0.9;
+}
+
+/* MONITORING BOX ---------------------------- */
+.monitor-box {
+    background: var(--god-card-bg);
+    padding: 25px;
+    border-radius: 14px;
+    border: 1px solid var(--god-border);
+}
+
+/* WIDGET CARDS ------------------------------ */
+.widget-card {
+    padding: 20px;
+    border-radius: 14px;
+    background: var(--god-card-bg);
+    border: 1px solid var(--god-border);
+    transition: 0.3s;
+}
+
+.widget-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--god-accent);
+}
