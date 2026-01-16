@@ -1,4 +1,4 @@
-name: PaserExpress Auto Deploy
+name: Deploy PaserExpress to VPS
 
 on:
   push:
@@ -7,35 +7,51 @@ on:
 
 jobs:
   deploy:
+    name: Deploy to VPS
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+
+    - name: Checkout Repository
       uses: actions/checkout@v3
 
-    - name: Install jq
-      run: sudo apt-get install -y jq
+    # ============================================================
+    # 1. LOAD SSH PRIVATE KEY (Fixes libcrypto error)
+    # ============================================================
+    - name: Load Private Key
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Load deploy configuration
-      id: config
+    # ============================================================
+    # 2. ADD VPS HOST TO KNOWN HOSTS
+    # ============================================================
+    - name: Add VPS Host Key
       run: |
-        CONFIG=$(cat deploy-config.json)
-        echo "VPS_HOST=$(echo "$CONFIG" | jq -r '.host')" >> $GITHUB_ENV
-        echo "VPS_USER=$(echo "$CONFIG" | jq -r '.user')" >> $GITHUB_ENV
-        echo "VPS_PORT=$(echo "$CONFIG" | jq -r '.port')" >> $GITHUB_ENV
+        mkdir -p ~/.ssh
+        ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+        chmod 644 ~/.ssh/known_hosts
 
-    - name: Show loaded config
+    # ============================================================
+    # 3. TEST SSH CONNECTION
+    # ============================================================
+    - name: Test SSH Connection
       run: |
-        echo "Deploying to:"
-        echo "Host: $VPS_HOST"
-        echo "User: $VPS_USER"
-        echo "Port: $VPS_PORT"
+        echo "Testing SSH..."
+        ssh -o BatchMode=yes -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo 'SSH OK from GitHub Actions'"
+      shell: bash
 
-    - name: Install SSH key
-  uses: webfactory/ssh-agent@v0.8.0
-  with:
-    ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    # ============================================================
+    # 4. RUN DEPLOY SCRIPT IN VPS
+    # ============================================================
+    - name: Execute Remote Deploy Script
+      run: |
+        echo "Running remote deploy script..."
+        ssh -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "bash /usr/local/bin/paserexpress-deploy.sh"
+      shell: bash
 
-- name: Deploy to VPS
-  run: |
-    ssh -o StrictHostKeyChecking=no -p $VPS_PORT $VPS_USER@$VPS_HOST "bash /usr/local/bin/paserexpress-deploy.sh"
+    # ============================================================
+    # 5. SUCCESS
+    # ============================================================
+    - name: Deployment Finished
+      run: echo "🎉 Deployment Completed Successfully!"
