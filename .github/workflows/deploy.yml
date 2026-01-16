@@ -1,43 +1,43 @@
-name: Auto Deploy PaserExpress
+name: PaserExpress Auto Deploy
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    name: Deploy to VPS
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
 
-    - name: Setup SSH key
+    - name: Install jq
+      run: sudo apt-get install -y jq
+
+    - name: Load deploy configuration
+      id: config
+      run: |
+        CONFIG=$(cat deploy-config.json)
+        echo "VPS_HOST=$(echo "$CONFIG" | jq -r '.host')" >> $GITHUB_ENV
+        echo "VPS_USER=$(echo "$CONFIG" | jq -r '.user')" >> $GITHUB_ENV
+        echo "VPS_PORT=$(echo "$CONFIG" | jq -r '.port')" >> $GITHUB_ENV
+
+    - name: Show loaded config
+      run: |
+        echo "Deploying to:"
+        echo "Host: $VPS_HOST"
+        echo "User: $VPS_USER"
+        echo "Port: $VPS_PORT"
+
+    - name: Create SSH key
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -p $VPS_PORT $VPS_HOST >> ~/.ssh/known_hosts
 
-    - name: Add VPS to known_hosts
-      run: ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-
-    - name: Backup Before Deploy
-      run: ssh root@${{ secrets.VPS_HOST }} "bash /usr/local/bin/paserexpress-backup.sh --quick"
-
-    - name: Deploy
+    - name: Deploy to VPS
       run: |
-        ssh root@${{ secrets.VPS_HOST }} "\
-          cd /var/www/paserexpress && \
-          git fetch --all && git reset --hard origin/main && \
-          chmod -R 755 /var/www/paserexpress && \
-          systemctl reload php8.3-fpm && \
-          systemctl reload nginx \
-        "
-
-    - name: Verify Deployment
-      run: ssh root@${{ secrets.VPS_HOST }} "curl -f http://localhost"
-
-    - name: Rollback if Failed
-      if: failure()
-      run: ssh root@${{ secrets.VPS_HOST }} "bash /usr/local/bin/paserexpress-backup.sh --rollback"
+        ssh -p $VPS_PORT $VPS_USER@$VPS_HOST "bash /usr/local/bin/paserexpress-deploy.sh"
