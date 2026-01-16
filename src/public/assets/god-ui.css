@@ -1,0 +1,267 @@
+/* ================================================
+   PASEREXPRESS — GOD UI EDITION CSS
+   Compatible with Bootstrap 5.3
+   Dark/Light Auto Mode + Smooth UI Animations
+   Created: God UI Designer
+================================================ */
+
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* BODY */
+.god-body {
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+}
+
+/* ================================================
+   DARK & LIGHT THEMES
+================================================ */
+:root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: rgba(255,255,255,0.06);
+    --text: #e6edf3;
+    --text-muted: #9aa5b1;
+    --accent: #0d99ff;
+    --card: rgba(255,255,255,0.05);
+    --card-border: rgba(255,255,255,0.1);
+}
+:root[data-theme="light"] {
+    --bg: #f0f2f5;
+    --bg2: #ffffff;
+    --bg3: rgba(0,0,0,0.06);
+    --text: #111;
+    --text-muted: #555;
+    --accent: #007bff;
+    --card: rgba(0,0,0,0.03);
+    --card-border: rgba(0,0,0,0.08);
+}
+
+/* Transition smooth */
+:root {
+    transition: all .25s ease-in-out;
+}
+
+/* ================================================
+   SIDEBAR
+================================================ */
+.god-sidebar {
+    width: 250px;
+    background: var(--bg2);
+    border-right: 1px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    padding-top: 10px;
+    position: fixed;
+    height: 100vh;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    transform: translateX(0);
+    transition: 0.3s ease;
+    z-index: 2000;
+}
+
+/* Collapsed Sidebar */
+.god-sidebar.collapsed {
+    width: 70px;
+}
+.god-sidebar.collapsed .sidebar-title,
+.god-sidebar.collapsed .god-nav li a span {
+    display: none;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    color: var(--text);
+}
+.sidebar-title {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Navigation */
+.god-nav {
+    list-style: none;
+    margin-top: 10px;
+    padding-left: 0;
+}
+.god-nav li {
+    width: 100%;
+}
+.god-nav li a {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 20px;
+    color: var(--text);
+    text-decoration: none;
+    border-radius: 10px;
+    margin: 4px 10px;
+    transition: 0.2s ease;
+    font-weight: 500;
+    background: transparent;
+}
+.god-nav li a:hover {
+    background: var(--card);
+}
+.god-nav li a i {
+    font-size: 1.2rem;
+}
+
+/* ================================================
+   MAIN AREA
+================================================ */
+.god-main {
+    margin-left: 250px;
+    width: calc(100% - 250px);
+    transition: 0.3s ease;
+    min-height: 100vh;
+}
+
+/* If sidebar collapsed */
+.god-sidebar.collapsed ~ .god-main {
+    margin-left: 70px;
+    width: calc(100% - 70px);
+}
+
+/* ================================================
+   NAVBAR
+================================================ */
+.god-navbar {
+    background: var(--bg2);
+    color: var(--text);
+    height: 65px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.god-navbar .navbar-brand {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+/* User profile */
+.god-username {
+    color: var(--accent);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ================================================
+   FOOTER
+================================================ */
+.god-footer {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 40px;
+    padding-bottom: 20px;
+}
+
+/* ================================================
+   CARDS (Reusable)
+================================================ */
+.god-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: 0.25s ease;
+}
+.god-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+/* ================================================
+   TABLES
+================================================ */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+table th {
+    background: var(--bg2);
+    color: var(--text);
+    font-weight: 600;
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--card-border);
+}
+table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--card-border);
+    color: var(--text-muted);
+}
+table tr:hover {
+    background: var(--card);
+}
+
+/* ================================================
+   BUTTONS
+================================================ */
+.btn-primary,
+.btn-outline-primary {
+    border-radius: 10px !important;
+    font-weight: bold;
+}
+.btn-primary {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+.btn-outline-primary {
+    color: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+.btn-outline-primary:hover {
+    background: var(--accent) !important;
+    color: #fff !important;
+}
+
+/* ================================================
+   FORMS
+================================================ */
+input, select, textarea {
+    background: var(--bg2) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+}
+
+/* ================================================
+   ANIMATIONS
+================================================ */
+.god-fade {
+    animation: fadeIn 0.35s ease forwards;
+}
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(10px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+/* ================================================
+   RESPONSIVE
+================================================ */
+@media (max-width: 992px) {
+    .god-sidebar {
+        transform: translateX(-300px);
+    }
+    .god-sidebar.expanded {
+        transform: translateX(0);
+    }
+    .god-main {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
