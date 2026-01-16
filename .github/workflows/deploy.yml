@@ -1,65 +1,50 @@
-name: 🚀 PaserExpress Auto Deploy
+name: 🚀 Auto Deploy PaserExpress
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repo
-      uses: actions/checkout@v4
+    - name: 🔄 Checkout Repo
+      uses: actions/checkout@v3
 
-    # ================================================================
-    #  LOAD SSH KEY DARI GITHUB SECRETS
-    # ================================================================
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.8.0
+    # ============================================
+    # 1. SETUP SSH AGENT + LOAD PRIVATE KEY
+    # ============================================
+    - name: 🔐 Setup SSH Key
+      uses: webfactory/ssh-agent@v0.7.0
       with:
         ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
-    - name: Add VPS to known_hosts
+    # ============================================
+    # 2. Add VPS to known_hosts
+    # ============================================
+    - name: 🔑 Add VPS to known_hosts
       run: |
-        mkdir -p ~/.ssh
         ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-    # ================================================================
-    #  DEPLOY KE VPS LANGSUNG (TANPA SCRIPT TAMBAHAN)
-    # ================================================================
-    - name: Deploy to VPS
+    # ============================================
+    # 3. DOWNLOAD DEPLOY SCRIPT FROM GITHUB (REMOTE)
+    # ============================================
+    - name: 📥 Download deploy script from GitHub
       run: |
-        ssh -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-        
-        set -e
+        ssh -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+        "curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/scripts/deploy.sh -o /tmp/paserexpress-deploy.sh && chmod +x /tmp/paserexpress-deploy.sh"
 
-        echo '===[1/6] PULL UPDATE DARI GITHUB==='
-        cd /var/www/paserexpress || exit 1
-        git fetch --all
-        git reset --hard origin/main
+    # ============================================
+    # 4. EXECUTE DEPLOY SCRIPT
+    # ============================================
+    - name: 🚀 Execute Deploy Script on VPS
+      run: |
+        ssh -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+        "bash /tmp/paserexpress-deploy.sh"
 
-        echo '===[2/6] SET FILE PERMISSION==='
-        chown -R www-data:www-data /var/www/paserexpress
-        find /var/www/paserexpress -type d -exec chmod 755 {} \;
-        find /var/www/paserexpress -type f -exec chmod 644 {} \;
-
-        echo '===[3/6] RUN BACKUP OTOMATIS==='
-        if [ -f /usr/local/bin/paserexpress-backup.sh ]; then
-            bash /usr/local/bin/paserexpress-backup.sh
-        fi
-
-        echo '===[4/6] RUN AUTO MIGRATION (SKIP IF NONE)==='
-        if [ -f /var/www/paserexpress/src/cli/migrate.php ]; then
-            php /var/www/paserexpress/src/cli/migrate.php
-        fi
-
-        echo '===[5/6] RELOAD PHP-FPM==='
-        systemctl reload php8.3-fpm || true
-
-        echo '===[6/6] RESTART NGINX==='
-        systemctl reload nginx || true
-
-        echo '✨ DEPLOY SELESAI TANPA ERROR ✨'
-        "
+    # ============================================
+    # 5. DONE 🎉
+    # ============================================
+    - name: ✅ Deployment Completed
+      run: echo "PaserExpress deployed successfully!"
