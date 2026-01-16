@@ -92,6 +92,18 @@ switch ($page) {
         require __DIR__ . "/../views/admin_monitoring.php";
         break;
 
+    case "admin_backup":
+        (new AdminController)->backupSettings();
+        break;
+
+    case "admin_backup_save":
+        (new AdminController)->backupSave();
+        break;
+
+    case "admin_backup_run":
+        (new AdminController)->backupRunNow();
+        break;
+    
     default:
         echo "<h2>PaserExpress Running</h2>";
         echo "Page: <b>" . sanitize($page) . "</b>";
