@@ -1,46 +1,62 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Login - PaserExpress</title>
-</head>
-<body>
+<?php
+if (!isset($title)) $title = "Login — PaserExpress";
+?>
 
-<h2>Login</h2>
+<div class="god-login-wrapper">
 
-<?php $title = "Login — PaserExpress"; ob_start(); ?>
+    <!-- LOGIN CARD -->
+    <div class="god-login-card animate__animated animate__fadeInDown">
 
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4">
+        <!-- Logo + Title -->
+        <div class="text-center mb-4">
+            <i class="bi bi-lightning-charge-fill god-logo-lg"></i>
+            <h2 class="mt-2 fw-bold">PaserExpress</h2>
+            <p class="god-muted">Masuk ke dashboard administrasi</p>
+        </div>
 
-        <div class="god-card p-4">
-            <h3 class="text-center mb-4 fw-bold">
-                <i class="bi bi-shield-lock-fill"></i> Login
-            </h3>
+        <!-- LOGIN FORM -->
+        <form method="POST" action="?page=login">
 
-            <?php if (!empty($error)): ?>
-                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-            <?php endif; ?>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Username</label>
+                <input type="text" name="username" class="form-control god-input" required>
+            </div>
 
-            <form method="post">
-
-                <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" name="username" class="form-control" required />
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Password</label>
+                <div class="input-group">
+                    <input type="password" id="password" name="password" class="form-control god-input" required>
+                    <button class="btn btn-outline-secondary" type="button" id="togglePw">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" required />
-                </div>
+            <button class="btn god-btn w-100 mt-2" type="submit">
+                <i class="bi bi-box-arrow-in-right me-1"></i>
+                Login
+            </button>
+        </form>
 
-                <button class="btn btn-god-primary w-100">
-                    Login <i class="bi bi-box-arrow-in-right"></i>
-                </button>
-
-            </form>
+        <div class="text-center mt-4 small god-muted">
+            © <?= date("Y") ?> PaserExpress
         </div>
 
     </div>
 </div>
 
-<?php $content = ob_get_clean(); include __DIR__ . "/layout.php"; ?>
+<!-- PASSWORD TOGGLE -->
+<script>
+document.getElementById("togglePw").onclick = function () {
+    const pw = document.getElementById("password");
+    const icon = this.querySelector("i");
+
+    if (pw.type === "password") {
+        pw.type = "text";
+        icon.classList.replace("bi-eye", "bi-eye-slash");
+    } else {
+        pw.type = "password";
+        icon.classList.replace("bi-eye-slash", "bi-eye");
+    }
+};
+</script>
