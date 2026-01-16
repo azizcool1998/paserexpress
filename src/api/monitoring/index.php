@@ -2,18 +2,6 @@
 require_once __DIR__ . '/../../includes/bootstrap.php';
 
 // -----------------------------
-// AUTH
-// -----------------------------
-$API_KEY = $_GET['key'] ?? '';
-$VALID_KEY = getenv("MONITORING_API_KEY");
-
-if (!$VALID_KEY || $API_KEY !== $VALID_KEY) {
-    http_response_code(403);
-    echo json_encode(["error"=>"Forbidden"]);
-    exit;
-}
-
-// -----------------------------
 // Function Helpers
 // -----------------------------
 function cmd($c) { return trim(shell_exec($c)); }
@@ -36,7 +24,7 @@ $disk_percent = round(($disk_used / $disk_total) * 100, 2);
 // HTTP check
 $http = cmd("curl -o /dev/null -s -w '%{http_code}' http://localhost");
 
-// Service status
+// Service checks
 $nginx   = trim(cmd("systemctl is-active nginx"));
 $phpfpm  = trim(cmd("systemctl is-active php8.3-fpm"));
 $mariadb = trim(cmd("systemctl is-active mariadb"));
@@ -50,10 +38,10 @@ $uptime = cmd("uptime -p");
 header("Content-Type: application/json");
 
 echo json_encode([
-    "time" => date("H:i:s"),
-    "cpu"  => $cpu,
+    "time"     => date("H:i:s"),
+    "cpu"      => $cpu,
 
-    "ram"  => [
+    "ram" => [
         "used"    => $ram_used,
         "total"   => $ram_total,
         "percent" => $ram_percent
@@ -70,6 +58,6 @@ echo json_encode([
     "phpfpm"  => $phpfpm,
     "mariadb" => $mariadb,
 
-    "uptime"  => $uptime,
+    "uptime" => $uptime,
     "success" => true
 ], JSON_PRETTY_PRINT);
