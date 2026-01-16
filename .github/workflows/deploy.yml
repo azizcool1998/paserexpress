@@ -1,80 +1,65 @@
-name: PaserExpress CI/CD Deploy
+name: 🚀 PaserExpress Auto Deploy
 
 on:
   push:
-    branches: ["main"]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   deploy:
-    name: Deploy to VPS
     runs-on: ubuntu-latest
 
     steps:
-
-    # ----------------------------------------------------
-    # 1) Checkout Repo
-    # ----------------------------------------------------
-    - name: Checkout Repository
+    - name: Checkout Repo
       uses: actions/checkout@v4
 
-    # ----------------------------------------------------
-    # 2) Setup SSH Private Key
-    # ----------------------------------------------------
-    - name: Setup SSH Key
-      uses: webfactory/ssh-agent@v0.9.0
+    # ================================================================
+    #  LOAD SSH KEY DARI GITHUB SECRETS
+    # ================================================================
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
       with:
-        ssh-private-key: ${{ secrets.PE_SSH_PRIVATE_KEY }}
+        ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
-    # ----------------------------------------------------
-    # 3) Add VPS to known_hosts
-    # ----------------------------------------------------
-    - name: Add VPS to Known Hosts
+    - name: Add VPS to known_hosts
       run: |
-        ssh-keyscan -p "${{ secrets.PE_SSH_PORT }}" "${{ secrets.PE_SSH_HOST }}" >> ~/.ssh/known_hosts
+        mkdir -p ~/.ssh
+        ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-    # ----------------------------------------------------
-    # 4) Deploy to VPS
-    # ----------------------------------------------------
-    - name: Deploy to VPS via SSH
+    # ================================================================
+    #  DEPLOY KE VPS LANGSUNG (TANPA SCRIPT TAMBAHAN)
+    # ================================================================
+    - name: Deploy to VPS
       run: |
-        ssh -p ${{ secrets.PE_SSH_PORT }} ${{ secrets.PE_SSH_USER }}@${{ secrets.PE_SSH_HOST }} "
-          set -e
+        ssh -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+        
+        set -e
 
-          echo '>>> PaserExpress Deploy Started on VPS'
+        echo '===[1/6] PULL UPDATE DARI GITHUB==='
+        cd /var/www/paserexpress || exit 1
+        git fetch --all
+        git reset --hard origin/main
 
-          # Path aplikasi (sesuaikan jika beda)
-          APP_PATH='/var/www/paserexpress'
+        echo '===[2/6] SET FILE PERMISSION==='
+        chown -R www-data:www-data /var/www/paserexpress
+        find /var/www/paserexpress -type d -exec chmod 755 {} \;
+        find /var/www/paserexpress -type f -exec chmod 644 {} \;
 
-          # Jika folder belum ada → clone baru
-          if [ ! -d \$APP_PATH ]; then
-            echo '>>> Creating fresh clone...'
-            git clone --depth 1 https://github.com/${{ github.repository }}.git \$APP_PATH
-          else
-            echo '>>> Updating existing repo...'
-            cd \$APP_PATH && git fetch --all && git reset --hard origin/main
-          fi
+        echo '===[3/6] RUN BACKUP OTOMATIS==='
+        if [ -f /usr/local/bin/paserexpress-backup.sh ]; then
+            bash /usr/local/bin/paserexpress-backup.sh
+        fi
 
-          echo '>>> Setting permissions...'
-          chown -R www-data:www-data \$APP_PATH
-          find \$APP_PATH -type d -exec chmod 755 {} \;
-          find \$APP_PATH -type f -exec chmod 644 {} \;
+        echo '===[4/6] RUN AUTO MIGRATION (SKIP IF NONE)==='
+        if [ -f /var/www/paserexpress/src/cli/migrate.php ]; then
+            php /var/www/paserexpress/src/cli/migrate.php
+        fi
 
-          # Composer (opsional)
-          if [ -f '\$APP_PATH/composer.json' ]; then
-            echo '>>> Composer install...'
-            cd \$APP_PATH && composer install --no-dev --optimize-autoloader
-          fi
+        echo '===[5/6] RELOAD PHP-FPM==='
+        systemctl reload php8.3-fpm || true
 
-          # NodeJS (opsional)
-          if [ -f '\$APP_PATH/package.json' ]; then
-            echo '>>> Node install/build...'
-            cd \$APP_PATH && npm install --omit=dev && npm run build
-          fi
+        echo '===[6/6] RESTART NGINX==='
+        systemctl reload nginx || true
 
-          echo '>>> Reloading services...'
-          systemctl reload php8.3-fpm || true
-          systemctl reload nginx || true
-
-          echo '>>> Deployment complete!'
+        echo '✨ DEPLOY SELESAI TANPA ERROR ✨'
         "
