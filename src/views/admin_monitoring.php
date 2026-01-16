@@ -1,89 +1,118 @@
-<?php $title = "Monitoring PRO"; ob_start(); ?>
+<?php $title = "Monitoring ULTRA PRO MAX"; ?>
 
-<h2 class="fw-bold mb-4">
+<div class="god-section-title mb-4">
     <i class="bi bi-activity"></i> Monitoring ULTRA PRO MAX
-</h2>
-
-<div class="monitor-box" id="monitor-box">
-    <p><b>Loading monitoring data...</b></p>
 </div>
 
+<div id="monitor-data" class="row g-3">
+    <div class="col-12">
+        <div class="god-card p-4 text-center">
+            <h4>Loading monitoring data...</h4>
+        </div>
+    </div>
+</div>
+
+<!-- ACTION BUTTONS -->
+<div class="mt-4">
+    <div class="row g-3">
+
+        <div class="col-md-3">
+            <button onclick="doAction('restart_nginx')" class="btn btn-warning w-100">
+                🔄 Restart Nginx
+            </button>
+        </div>
+
+        <div class="col-md-3">
+            <button onclick="doAction('restart_php')" class="btn btn-warning w-100">
+                🔄 Restart PHP-FPM
+            </button>
+        </div>
+
+        <div class="col-md-3">
+            <button onclick="doAction('restart_mariadb')" class="btn btn-warning w-100">
+                🔄 Restart MariaDB
+            </button>
+        </div>
+
+        <div class="col-md-3">
+            <button onclick="doAction('reboot_server')" class="btn btn-danger w-100">
+                ⚠ Restart Server
+            </button>
+        </div>
+
+    </div>
+</div>
+
+
 <script>
-async function loadMonitor() {
-    const res = await fetch("?page=api_monitoring");
+async function loadData() {
+    const res = await fetch("?page=api_monitoring_ultra");
     const json = await res.json();
 
     if (!json.success) {
-        document.getElementById("monitor-box").innerHTML =
-            "<div class='alert alert-danger'>Failed to load monitoring data.</div>";
+        document.getElementById("monitor-data").innerHTML =
+            `<div class='god-card p-4 text-danger text-center'><b>Error loading data</b></div>`;
         return;
     }
 
-    const d = json.data;
+    const d = json;
 
-    document.getElementById("monitor-box").innerHTML = `
-        <h4 class="fw-bold mb-3">
-            System Overview <span class="text-muted fs-6">(${d.timestamp})</span>
-        </h4>
-
-        <div class="row">
-
-            <div class="col-md-4">
-                <div class="widget-card text-center">
-                    <div class="fs-1">🖥️</div>
-                    <h5 class="fw-bold mt-2">CPU Load</h5>
-                    <p>${d.cpu_load['1min']} | ${d.cpu_load['5min']} | ${d.cpu_load['15min']}</p>
-                </div>
+    document.getElementById("monitor-data").innerHTML = `
+        <div class="col-md-3">
+            <div class="god-card p-4">
+                <h5>CPU Load</h5>
+                <p>${d.cpu.load_1m} / ${d.cpu.load_5m} / ${d.cpu.load_15m}</p>
+                <small>Temp: ${d.cpu.temperature}</small>
             </div>
-
-            <div class="col-md-4">
-                <div class="widget-card text-center">
-                    <div class="fs-1">💾</div>
-                    <h5 class="fw-bold mt-2">Memory</h5>
-                    <p>${d.ram.used_mb} MB / ${d.ram.total_mb} MB</p>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="widget-card text-center">
-                    <div class="fs-1">📀</div>
-                    <h5 class="fw-bold mt-2">Disk</h5>
-                    <p>${d.disk.used_gb} GB / ${d.disk.total_gb} GB</p>
-                </div>
-            </div>
-
         </div>
 
-        <hr class="my-4">
+        <div class="col-md-3">
+            <div class="god-card p-4">
+                <h5>RAM</h5>
+                <p>${d.ram.used} MB / ${d.ram.total} MB</p>
+                <small>Free: ${d.ram.free} MB</small>
+            </div>
+        </div>
 
-        <h5 class="fw-bold">Services Status</h5>
-        <ul class="list-group mt-3">
-            <li class="list-group-item">
-                Nginx:
-                <b class="${d.services.nginx === 'running' ? 'text-success' : 'text-danger'}">
-                    ${d.services.nginx}
-                </b>
-            </li>
+        <div class="col-md-3">
+            <div class="god-card p-4">
+                <h5>Disk</h5>
+                <p>${d.disk.used} / ${d.disk.total} GB</p>
+                <small>Free: ${d.disk.free} GB</small>
+            </div>
+        </div>
 
-            <li class="list-group-item">
-                PHP-FPM:
-                <b class="${d.services.php_fpm === 'running' ? 'text-success' : 'text-danger'}">
-                    ${d.services.php_fpm}
-                </b>
-            </li>
+        <div class="col-md-3">
+            <div class="god-card p-4">
+                <h5>Uptime</h5>
+                <p>${d.uptime}</p>
+            </div>
+        </div>
 
-            <li class="list-group-item">
-                MariaDB:
-                <b class="${d.services.mariadb === 'running' ? 'text-success' : 'text-danger'}">
-                    ${d.services.mariadb}
-                </b>
-            </li>
-        </ul>
+        <div class="col-12">
+            <div class="god-card p-4">
+                <h5>Services</h5>
+                <p>Nginx: <b>${d.services.nginx}</b></p>
+                <p>PHP-FPM: <b>${d.services.php_fpm}</b></p>
+                <p>MariaDB: <b>${d.services.mariadb}</b></p>
+            </div>
+        </div>
     `;
 }
 
-loadMonitor();
-setInterval(loadMonitor, 10000);
-</script>
+async function doAction(action) {
+    if (!confirm("Yakin menjalankan aksi ini?")) return;
 
-<?php $content = ob_get_clean(); include __DIR__ . "/layout.php"; ?>
+    const res = await fetch("?page=api_monitoring_actions&action=" + action);
+    const json = await res.json();
+
+    alert(json.message || json.error);
+
+    if (action !== 'reboot_server') {
+        loadData();
+    }
+}
+
+loadData();
+setInterval(loadData, 5000);
+</script>
