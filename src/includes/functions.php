@@ -1,5 +1,8 @@
 <?php
 
+/* -----------------------------------------------------------
+ * ENV LOADER
+ * ---------------------------------------------------------*/
 function env($key, $default = "")
 {
     static $vars = null;
@@ -20,6 +23,9 @@ function env($key, $default = "")
     return $vars[$key] ?? $default;
 }
 
+/* -----------------------------------------------------------
+ * VIEW & SECURITY HELPERS
+ * ---------------------------------------------------------*/
 function redirect($url)
 {
     header("Location: $url");
@@ -42,4 +48,57 @@ function session_start_secure()
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
+}
+
+/* -----------------------------------------------------------
+ * SETTINGS SYSTEM — NEW!!
+ * Stored in: /config/settings.json
+ * ---------------------------------------------------------*/
+
+/**
+ * Load settings from JSON file.
+ * Always returns array.
+ */
+function load_settings()
+{
+    $path = dirname(__DIR__, 2) . "/config/settings.json";
+
+    // file not exists = create default
+    if (!file_exists($path)) {
+        $default = [
+            "APP_NAME"        => "Paser Express",
+            "APP_BASE_URL"    => "http://localhost",
+            "NODE_DOMAIN"     => "",
+            "BACKUP_ENABLED"  => "no",
+            "BACKUP_INTERVAL" => "1d"
+        ];
+        file_put_contents($path, json_encode($default, JSON_PRETTY_PRINT));
+        return $default;
+    }
+
+    $json = file_get_contents($path);
+    $data = json_decode($json, true);
+
+    if (!is_array($data)) {
+        return [];
+    }
+
+    return $data;
+}
+
+/**
+ * Save settings array to JSON file.
+ */
+function save_settings($arr)
+{
+    $path = dirname(__DIR__, 2) . "/config/settings.json";
+
+    if (!is_array($arr)) {
+        return false;
+    }
+
+    // overwrite entire file
+    file_put_contents($path, json_encode($arr, JSON_PRETTY_PRINT));
+
+    return true;
 }
