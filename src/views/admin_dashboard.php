@@ -1,5 +1,7 @@
 <h2>Admin Dashboard</h2>
+
 <li><a href="?page=admin_monitoring">Monitoring PRO</a></li>
+
 <table border="1">
 <tr>
     <th>ID</th>
@@ -16,6 +18,8 @@
     <td><?= sanitize($u['role']) ?></td>
 </tr>
 <?php endforeach; ?>
+
+</table> <!-- ✔️ TUTUP DI SINI -->
 
 <h2>Server Monitoring</h2>
 <div id="monitor-box" style="padding:15px;background:#1e1e1e;color:#fff;border-radius:10px;margin-bottom:20px">
@@ -61,6 +65,3 @@ async function loadMonitoring() {
 loadMonitoring();
 setInterval(loadMonitoring, 15000);
 </script>
-
-
-</table>
