@@ -3,6 +3,21 @@ require_once __DIR__ . '/../includes/bootstrap.php';
 
 $page = $_GET['page'] ?? 'home';
 
+/*
+|------------------------------------------
+| API (diproses lebih dulu sebelum switch)
+|------------------------------------------
+*/
+if ($page === 'api_monitoring') {
+    require_once __DIR__ . '/../api/monitoring.php';
+    exit;
+}
+
+/*
+|------------------------------------------
+| ROUTER HALAMAN
+|------------------------------------------
+*/
 switch ($page) {
 
     case "login":
@@ -28,10 +43,4 @@ switch ($page) {
     default:
         echo "<h2>PaserExpress Running</h2>";
         echo "Page: <b>" . sanitize($page) . "</b>";
-}
-
-// API: Monitoring
-if ($page === 'api_monitoring') {
-    require_once __DIR__ . '/../api/monitoring.php';
-    exit;
 }
