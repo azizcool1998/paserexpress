@@ -53,8 +53,8 @@ switch ($page) {
         break;
 
     case "admin_update":
-    (new UpdateController)->index();
-    break;
+        (new UpdateController)->index();
+        break;
 
     case "update_check":
         (new UpdateController)->checkUpdate();
@@ -83,6 +83,10 @@ switch ($page) {
     case "log_clear":
         (new LogController)->clear();
         break;
+
+    case "api_monitoring_pro":
+        require __DIR__ . "/../api/monitoring_pro.php";
+        exit;
 
     default:
         echo "<h2>PaserExpress Running</h2>";
